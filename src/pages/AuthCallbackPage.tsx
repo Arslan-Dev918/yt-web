@@ -13,21 +13,34 @@ export function AuthCallbackPage() {
         setMessage('Supabase is not configured for this app.')
         return
       }
-      const code = new URLSearchParams(window.location.search).get('code')
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get('code')
       if (!code) {
-        setMessage('The sign-in link did not include an authorization code. Start again from the sign-in page.')
+        const providerError = params.get('error_description') ?? params.get('error')
+        window.history.replaceState({}, document.title, window.location.pathname)
+        setMessage(providerError
+          ? `Google sign-in failed: ${providerError}`
+          : 'The sign-in link did not include an authorization code. Check the Google provider and redirect URL settings, then try again.')
         return
       }
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      let error: Error | null = null
+      try {
+        const result = await supabase.auth.exchangeCodeForSession(code)
+        error = result.error
+      } catch (cause) {
+        error = cause instanceof Error ? cause : new Error('Could not finish Google sign-in.')
+      }
       if (!active) return
       window.history.replaceState({}, document.title, window.location.pathname)
       if (error) {
-        setMessage(error.message)
+        setMessage(`Could not finish Google sign-in: ${error.message}`)
         return
       }
       navigate('/', { replace: true })
     }
-    void finishSignIn()
+    void finishSignIn().catch(() => {
+      if (active) setMessage('Google sign-in could not be completed. Check your Supabase and Google OAuth settings, then try again.')
+    })
     return () => { active = false }
   }, [navigate])
 
