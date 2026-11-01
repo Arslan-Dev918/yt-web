@@ -7,6 +7,8 @@ import { AuthPage } from './pages/AuthPage'
 import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { AccountPage } from './pages/AccountPage'
 import { ChannelPage } from './pages/ChannelPage'
+import { WatchPage } from './pages/WatchPage'
+import { UploadPage } from './pages/UploadPage'
 
 export default function App() {
   return <AuthProvider><AppShell><Routes>
@@ -14,8 +16,10 @@ export default function App() {
     <Route path="/auth" element={<AuthPage />} />
     <Route path="/auth/callback" element={<AuthCallbackPage />} />
     <Route path="/account" element={<AccountPage />} />
+    <Route path="/feed/upload" element={<UploadPage />} />
+    <Route path="/feed/channel" element={<AccountPage />} />
     <Route path="/feed/:section" element={<PlaceholderPage />} />
-    <Route path="/watch/:videoId" element={<PlaceholderPage />} />
+    <Route path="/watch/:videoId" element={<WatchPage />} />
     <Route path="/channel/:handle" element={<ChannelPage />} />
     <Route path="/search" element={<PlaceholderPage />} />
     <Route path="*" element={<Navigate to="/" replace />} />
