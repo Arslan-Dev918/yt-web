@@ -20,7 +20,7 @@ export function AuthPage() {
 
   return <section className="auth-page">
     <p className="eyebrow">YOUR ACCOUNT</p>
-    <h1>{user ? 'You’re signed in' : 'Sign in to YT Web'}</h1>
+    <h1>{user ? 'You’re signed in' : 'Sign in to VisTube'}</h1>
     <p className="auth-description">Use your Google account to continue. Your password is handled by Google and Supabase Auth.</p>
     {user ? <p className="auth-success">Signed in as {user.email ?? 'your Google account'}.</p> : <button className="google-button" onClick={handleGoogleSignIn} disabled={!configured || busy}>
       <GoogleMark />{busy ? 'Connecting…' : 'Continue with Google'}
