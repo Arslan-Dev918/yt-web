@@ -18,8 +18,9 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () =>
   return <><div className={`sidebar-backdrop ${open ? 'visible' : ''}`} onClick={onNavigate}/><aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
     <nav aria-label="Main navigation"><div className="nav-group">{links.map(({title, href, icon: Icon}) => <NavLink key={title} to={href} onClick={onNavigate} className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}><Icon size={21}/><span>{title}</span></NavLink>)}</div>
       <div className="nav-divider"/><section className="nav-section"><h2>You</h2>{library.map(({title, href, icon: Icon}) => <NavLink key={title} to={href} onClick={onNavigate} className="nav-link"><Icon size={20}/><span>{title}</span></NavLink>)}</section>
-      <div className="nav-divider"/><section className="nav-section"><h2>Creator</h2><NavLink to="/feed/channel" onClick={onNavigate} className="nav-link"><UserRoundPlus size={20}/><span>Create a channel</span></NavLink><NavLink to="/feed/upload" onClick={onNavigate} className="nav-link"><Radio size={20}/><span>Upload video</span></NavLink></section>
+      <div className="nav-divider"/><section className="nav-section"><h2>Creator</h2><NavLink to="/account" onClick={onNavigate} className="nav-link"><UserRoundPlus size={20}/><span>Create a channel</span></NavLink><NavLink to="/feed/upload" onClick={onNavigate} className="nav-link"><Radio size={20}/><span>Upload video</span></NavLink></section>
       <div className="sidebar-footer"><Settings size={16}/> Settings</div>
     </nav>
   </aside></>
 }
+
