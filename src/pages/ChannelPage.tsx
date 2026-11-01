@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { supabase } from '../lib/supabase'
+import { VideoCard } from '../components/VideoCard'
+import { loadPublicVideos, type VideoCardData } from '../lib/videos'
 
 type Channel = { id: string; owner_id: string; name: string; handle: string; description: string; avatar_url: string | null; banner_url: string | null; created_at: string }
 
@@ -9,6 +11,7 @@ export function ChannelPage() {
   const { handle = '' } = useParams()
   const { user } = useAuth()
   const [channel, setChannel] = useState<Channel | null>(null)
+  const [videos, setVideos] = useState<VideoCardData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -16,10 +19,19 @@ export function ChannelPage() {
     if (!supabase) { setLoading(false); setError('VisTube is not connected to Supabase.'); return }
     let active = true
     void supabase.from('channels').select('id,owner_id,name,handle,description,avatar_url,banner_url,created_at').eq('handle', handle.toLowerCase()).maybeSingle()
-      .then(({ data, error: queryError }) => {
+      .then(async ({ data, error: queryError }) => {
         if (!active) return
         if (queryError) setError('This channel could not be loaded.')
-        else setChannel(data)
+        else {
+          setChannel(data)
+          if (data) {
+            try {
+              const rows = await loadPublicVideos(data.id)
+              if (active) setVideos(rows)
+            } catch { if (active) setError('Channel videos could not be loaded.') }
+          }
+        }
+        if (!active) return
         setLoading(false)
       })
     return () => { active = false }
@@ -37,7 +49,8 @@ export function ChannelPage() {
       {user?.id === channel.owner_id && <Link className="form-secondary" to="/account">Edit channel</Link>}
     </header>
     <div className="channel-tabs"><span>Videos</span><span>About</span></div>
-    <div className="channel-empty"><h2>No videos yet</h2><p>Videos published to this channel will appear here.</p></div>
+    {videos.length ? <section className="video-grid channel-video-grid" aria-label="Channel videos">{videos.map(video => <VideoCard key={video.id} video={video}/>)}</section>
+      : <div className="channel-empty"><h2>No videos yet</h2><p>Videos published to this channel will appear here.</p></div>}
   </section>
 }
 
