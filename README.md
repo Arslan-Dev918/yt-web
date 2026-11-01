@@ -27,7 +27,13 @@ Database migrations are in `supabase/migrations/`. The first two files capture t
 
 ## Current implementation
 
-VisTube includes the responsive application shell, Google OAuth entry and callback, account profile editing, and channel creation and editing. Profile and channel records are stored in Supabase and protected by row-level security. The home feed still uses presentation fixtures; video upload, playback, and social features are later phases.
+VisTube includes the responsive application shell, Google OAuth entry and callback, account profile editing, channel management, a Supabase-backed public video feed, private Storage uploads, and signed-URL video playback.
+
+## Video uploads
+
+Signed-in users with a channel can upload MP4, MOV, or WebM files up to 100 MB and optional JPEG, PNG, WebP, or AVIF thumbnails up to 5 MB. Uploads are stored privately in Supabase Storage; video metadata and visibility are stored in Postgres. Public videos appear in the home feed and channel page, unlisted videos open by direct link, and private videos can be played only by their channel owner. The browser requests short-lived signed URLs under the Storage RLS policies.
+
+The browser upload uses a single Storage upload request. A dedicated resumable upload flow for larger media and video transcoding/streaming are future work; the current bucket limit is 100 MB.
 
 ## Deployment
 
