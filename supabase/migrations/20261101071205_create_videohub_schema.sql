@@ -1,0 +1,45 @@
+
+create extension if not exists pgcrypto;
+create table public.profiles (id uuid primary key references auth.users(id) on delete cascade, username text unique, display_name text not null default 'New creator', avatar_url text, bio text, created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table public.channels (id uuid primary key default gen_random_uuid(), owner_id uuid not null unique references public.profiles(id) on delete cascade, name text not null, handle text not null unique, description text not null default '', avatar_url text, banner_url text, created_at timestamptz not null default now());
+create table public.videos (id uuid primary key default gen_random_uuid(), channel_id uuid not null references public.channels(id) on delete cascade, title text not null, description text not null default '', video_url text not null, thumbnail_url text, visibility text not null default 'public' check (visibility in ('public','unlisted','private')), duration_seconds integer check (duration_seconds is null or duration_seconds >= 0), view_count bigint not null default 0 check (view_count >= 0), created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table public.video_likes (video_id uuid not null references public.videos(id) on delete cascade, user_id uuid not null references public.profiles(id) on delete cascade, created_at timestamptz not null default now(), primary key (video_id,user_id));
+create table public.comments (id uuid primary key default gen_random_uuid(), video_id uuid not null references public.videos(id) on delete cascade, user_id uuid not null references public.profiles(id) on delete cascade, parent_id uuid references public.comments(id) on delete cascade, body text not null check (char_length(body) between 1 and 5000), created_at timestamptz not null default now(), updated_at timestamptz not null default now());
+create table public.channel_subscriptions (channel_id uuid not null references public.channels(id) on delete cascade, user_id uuid not null references public.profiles(id) on delete cascade, created_at timestamptz not null default now(), primary key (channel_id,user_id));
+create table public.notifications (id uuid primary key default gen_random_uuid(), recipient_id uuid not null references public.profiles(id) on delete cascade, actor_id uuid references public.profiles(id) on delete set null, video_id uuid references public.videos(id) on delete cascade, kind text not null check (kind in ('new_subscriber','new_comment','new_like')), is_read boolean not null default false, created_at timestamptz not null default now());
+create index videos_channel_created_idx on public.videos(channel_id,created_at desc);
+create index videos_search_idx on public.videos using gin (to_tsvector('english',title || ' ' || description));
+create index comments_video_created_idx on public.comments(video_id,created_at desc);
+create index notifications_recipient_created_idx on public.notifications(recipient_id,created_at desc);
+alter table public.profiles enable row level security;
+alter table public.channels enable row level security;
+alter table public.videos enable row level security;
+alter table public.video_likes enable row level security;
+alter table public.comments enable row level security;
+alter table public.channel_subscriptions enable row level security;
+alter table public.notifications enable row level security;
+create policy "Profiles are viewable by everyone" on public.profiles for select using (true);
+create policy "Users create their own profile" on public.profiles for insert to authenticated with check (auth.uid()=id);
+create policy "Users update their own profile" on public.profiles for update to authenticated using (auth.uid()=id) with check (auth.uid()=id);
+create policy "Channels are viewable by everyone" on public.channels for select using (true);
+create policy "Owners create their channel" on public.channels for insert to authenticated with check (auth.uid()=owner_id);
+create policy "Owners update their channel" on public.channels for update to authenticated using (auth.uid()=owner_id) with check (auth.uid()=owner_id);
+create policy "Owners delete their channel" on public.channels for delete to authenticated using (auth.uid()=owner_id);
+create policy "Public and unlisted videos are viewable" on public.videos for select using (visibility in ('public','unlisted') or exists (select 1 from public.channels c where c.id=channel_id and c.owner_id=auth.uid()));
+create policy "Channel owners upload videos" on public.videos for insert to authenticated with check (exists (select 1 from public.channels c where c.id=channel_id and c.owner_id=auth.uid()));
+create policy "Channel owners update videos" on public.videos for update to authenticated using (exists (select 1 from public.channels c where c.id=channel_id and c.owner_id=auth.uid())) with check (exists (select 1 from public.channels c where c.id=channel_id and c.owner_id=auth.uid()));
+create policy "Channel owners delete videos" on public.videos for delete to authenticated using (exists (select 1 from public.channels c where c.id=channel_id and c.owner_id=auth.uid()));
+create policy "Likes are viewable by everyone" on public.video_likes for select using (true);
+create policy "Users like videos as themselves" on public.video_likes for insert to authenticated with check (auth.uid()=user_id);
+create policy "Users remove their own likes" on public.video_likes for delete to authenticated using (auth.uid()=user_id);
+create policy "Comments are viewable by everyone" on public.comments for select using (true);
+create policy "Users add their own comments" on public.comments for insert to authenticated with check (auth.uid()=user_id);
+create policy "Users edit their own comments" on public.comments for update to authenticated using (auth.uid()=user_id) with check (auth.uid()=user_id);
+create policy "Users delete their own comments" on public.comments for delete to authenticated using (auth.uid()=user_id);
+create policy "Subscriptions are viewable by everyone" on public.channel_subscriptions for select using (true);
+create policy "Users subscribe as themselves" on public.channel_subscriptions for insert to authenticated with check (auth.uid()=user_id);
+create policy "Users remove their own subscriptions" on public.channel_subscriptions for delete to authenticated using (auth.uid()=user_id);
+create policy "Users view their own notifications" on public.notifications for select to authenticated using (auth.uid()=recipient_id);
+create policy "Users update their own notifications" on public.notifications for update to authenticated using (auth.uid()=recipient_id) with check (auth.uid()=recipient_id);
+
+
