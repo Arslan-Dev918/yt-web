@@ -1,6 +1,6 @@
-# YT Web
+# VisTube
 
-YT Web is a video sharing platform foundation built with React, TypeScript, Vite, Tailwind CSS, and Supabase.
+VisTube is a video sharing platform built with React, TypeScript, Vite, Tailwind CSS, and Supabase.
 
 ## Requirements
 
@@ -25,19 +25,20 @@ The auth-user trigger creates a profile for newly registered users. Video and th
 
 Database migrations are in `supabase/migrations/`. The first two files capture the existing remote migrations, and the Phase 2 migration hardens their RLS and storage policies.
 
-## Current foundation
+## Current implementation
 
-The first phase establishes the responsive application shell, navigation, category strip, video grid, and initial route structure. The home feed currently uses presentation fixtures; interactive platform data and actions are not connected yet. Supabase authentication, data queries, storage policies, and upload flows are planned for later phases.
+VisTube includes the responsive application shell, Google OAuth entry and callback, account profile editing, and channel creation and editing. Profile and channel records are stored in Supabase and protected by row-level security. The home feed still uses presentation fixtures; video upload, playback, and social features are later phases.
 
 ## Deployment
 
 Netlify can build with `npm run build` and publish the `dist` directory. Configure the two `VITE_SUPABASE_*` variables in the site's environment settings. `netlify.toml` includes SPA route fallback behavior.
 
-## Planned application structure
+## Application structure
 
 - `src/components`: shared layout and reusable interface components
 - `src/pages`: route-level screens
-- `src/services`: Supabase access and domain operations (next phase)
-- `supabase/migrations`: version-controlled database changes (next phase)
+- `src/auth`: session state and OAuth actions
+- `src/lib`: Supabase browser client
+- `supabase/migrations`: version-controlled database changes
 - `netlify/functions`: privileged server operations if needed (later phase)
 
